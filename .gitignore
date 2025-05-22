@@ -1,0 +1,10 @@
+*.iml
+*.iws
+*.ipr
+target/
+build/
+.idea/
+.gradle/
+.allure
+*.exec
+jacoco_html_rep/

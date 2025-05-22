@@ -1,0 +1,66 @@
+plugins {
+	id 'jacoco'
+}
+
+configurations {
+    jacocoAgent
+}
+
+ext {
+    jacocoVersion = '0.7.4.201502262128'
+    appJar = 'test-service-0.0.1.jar'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+jacoco {
+    toolVersion = jacocoVersion
+}
+
+task unachiveJacocoAgent << {
+    def jacocoAgentPath = configurations.jacocoAgent.resolve().first()
+    copy {
+        from zipTree(jacocoAgentPath)
+        into "$buildDir/jacocoagent/unachived"
+    }
+    copy {
+        from "$buildDir/jacocoagent/unachived/jacocoagent.jar"
+        into "$buildDir/jacocoagent"
+    }
+    delete "$buildDir/jacocoagent/unachived"
+}
+
+task launchApp {
+    dependsOn unachiveJacocoAgent
+}
+
+launchApp << {
+    "java -javaagent:$buildDir/jacocoagent/jacocoagent.jar=destfile=$buildDir/jacoco.exec -jar $buildDir/libs/${appJar}".execute()
+    Thread.sleep(5000)
+}
+
+task doTests {
+    // Do manual, automated tests
+}
+
+task stopApp {    
+    /* Stop test application (service) 
+    def pid = file('application.pid').text
+    "kill $pid".execute().waitFor() */
+}
+
+task codeCoverageReport(type: JacocoReport) {
+    executionData = files("$buildDir/jacoco.exec")
+    sourceDirectories = files("src/main/java")
+    classDirectories = files("$buildDir/classes/java/main")    
+
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.enabled = true
+        html.destination = "$buildDir/jacoco_html_rep"
+    }
+}
